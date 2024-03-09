@@ -62,9 +62,9 @@ type BaseApp struct { //nolint: maligned
 	// volatile states:
 	//
 	// checkState is set on InitChain and reset on Commit
-	// deliverState is set on InitChain and BeginBlock and set to nil on Commit
+	// DeliverState is set on InitChain and BeginBlock and set to nil on Commit
 	checkState   *state // for CheckTx
-	deliverState *state // for DeliverTx
+	DeliverState *state // for DeliverTx
 
 	// paramStore is used to query for ABCI consensus parameters from an
 	// application parameter store.
@@ -118,7 +118,7 @@ type appStore struct {
 	cms         sdk.CommitMultiStore // Main (uncached) state
 	storeLoader StoreLoader          // function to handle store loading, may be overridden with SetStoreLoader()
 
-	// an inter-block write-through cache provided to the context during deliverState
+	// an inter-block write-through cache provided to the context during DeliverState
 	interBlockCache sdk.MultiStorePersistentCache
 
 	fauxMerkleMode bool // if true, IAVL MountStores uses MountStoresDB for simulation speed.
@@ -424,13 +424,13 @@ func (app *BaseApp) setCheckState(header tmproto.Header) {
 	}
 }
 
-// setDeliverState sets the BaseApp's deliverState with a branched multi-store
+// setDeliverState sets the BaseApp's DeliverState with a branched multi-store
 // (i.e. a CacheMultiStore) and a new Context with the same multi-store branch,
 // and provided header. It is set on InitChain and BeginBlock and set to nil on
 // Commit.
 func (app *BaseApp) setDeliverState(header tmproto.Header) {
 	ms := app.cms.CacheMultiStore()
-	app.deliverState = &state{
+	app.DeliverState = &state{
 		ms:  ms,
 		ctx: sdk.NewContext(ms, header, false, app.logger),
 	}
@@ -557,11 +557,11 @@ func validateBasicTxMsgs(msgs []sdk.Msg) error {
 	return nil
 }
 
-// Returns the applications's deliverState if app is in runTxModeDeliver,
+// Returns the applications's DeliverState if app is in runTxModeDeliver,
 // otherwise it returns the application's checkstate.
 func (app *BaseApp) getState(mode runTxMode) *state {
 	if mode == runTxModeDeliver {
-		return app.deliverState
+		return app.DeliverState
 	}
 
 	return app.checkState

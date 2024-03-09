@@ -424,7 +424,7 @@ func TestMultiMsgDeliverTx(t *testing.T) {
 	res := app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 	require.True(t, res.IsOK(), fmt.Sprintf("%v", res))
 
-	store := app.deliverState.ctx.KVStore(capKey1)
+	store := app.DeliverState.ctx.KVStore(capKey1)
 
 	// tx counter only incremented once
 	txCounter := getIntFromStore(store, anteKey)
@@ -444,7 +444,7 @@ func TestMultiMsgDeliverTx(t *testing.T) {
 	res = app.DeliverTx(abci.RequestDeliverTx{Tx: txBytes})
 	require.True(t, res.IsOK(), fmt.Sprintf("%v", res))
 
-	store = app.deliverState.ctx.KVStore(capKey1)
+	store = app.DeliverState.ctx.KVStore(capKey1)
 
 	// tx counter only incremented once
 	txCounter = getIntFromStore(store, anteKey)
@@ -1066,8 +1066,8 @@ func TestInitChainer(t *testing.T) {
 	)
 
 	// assert that chainID is set correctly in InitChain
-	chainID := app.deliverState.ctx.ChainID()
-	require.Equal(t, "test-chain-id", chainID, "ChainID in deliverState not set correctly in InitChain")
+	chainID := app.DeliverState.ctx.ChainID()
+	require.Equal(t, "test-chain-id", chainID, "ChainID in DeliverState not set correctly in InitChain")
 
 	chainID = app.checkState.ctx.ChainID()
 	require.Equal(t, "test-chain-id", chainID, "ChainID in checkState not set correctly in InitChain")

@@ -41,7 +41,7 @@ func (app *BaseApp) NewContext(isCheckTx bool, header tmproto.Header) sdk.Contex
 			WithMinGasPrices(app.minGasPrices)
 	}
 
-	return sdk.NewContext(app.deliverState.ms, header, false, app.logger)
+	return sdk.NewContext(app.DeliverState.ms, header, false, app.logger)
 }
 
 func (app *BaseApp) NewUncachedContext(isCheckTx bool, header tmproto.Header) sdk.Context {

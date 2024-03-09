@@ -50,7 +50,7 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	// done after the deliver state and context have been set as it's persisted
 	// to state.
 	if req.ConsensusParams != nil {
-		app.StoreConsensusParams(app.deliverState.ctx, req.ConsensusParams)
+		app.StoreConsensusParams(app.DeliverState.ctx, req.ConsensusParams)
 	}
 
 	if app.initChainer == nil {
@@ -58,9 +58,9 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	}
 
 	// add block gas meter for any genesis transactions (allow infinite gas)
-	app.deliverState.ctx = app.deliverState.ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
+	app.DeliverState.ctx = app.DeliverState.ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
 
-	res = app.initChainer(app.deliverState.ctx, req)
+	res = app.initChainer(app.DeliverState.ctx, req)
 
 	// sanity check
 	if len(req.Validators) > 0 {
@@ -96,7 +96,7 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	}
 
 	// NOTE: We don't commit, but BeginBlock for block `initial_height` starts from this
-	// deliverState.
+	// DeliverState.
 	return abci.ResponseInitChain{
 		ConsensusParams: res.ConsensusParams,
 		Validators:      res.Validators,
@@ -138,21 +138,21 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	}
 
 	// Initialize the DeliverTx state. If this is the first block, it should
-	// already be initialized in InitChain. Otherwise app.deliverState will be
+	// already be initialized in InitChain. Otherwise app.DeliverState will be
 	// nil, since it is reset on Commit.
-	if app.deliverState == nil {
+	if app.DeliverState == nil {
 		app.setDeliverState(req.Header)
 	} else {
-		// In the first block, app.deliverState.ctx will already be initialized
+		// In the first block, app.DeliverState.ctx will already be initialized
 		// by InitChain. Context is now updated with Header information.
-		app.deliverState.ctx = app.deliverState.ctx.
+		app.DeliverState.ctx = app.DeliverState.ctx.
 			WithBlockHeader(req.Header).
 			WithBlockHeight(req.Header.Height)
 	}
 
 	// add block gas meter
 	var gasMeter sdk.GasMeter
-	if maxGas := app.getMaximumBlockGas(app.deliverState.ctx); maxGas > 0 {
+	if maxGas := app.getMaximumBlockGas(app.DeliverState.ctx); maxGas > 0 {
 		gasMeter = sdk.NewGasMeter(maxGas)
 	} else {
 		gasMeter = sdk.NewInfiniteGasMeter()
@@ -160,10 +160,10 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 
 	// NOTE: header hash is not set in NewContext, so we manually set it here
 
-	app.deliverState.ctx = app.deliverState.ctx.
+	app.DeliverState.ctx = app.DeliverState.ctx.
 		WithBlockGasMeter(gasMeter).
 		WithHeaderHash(req.Hash).
-		WithConsensusParams(app.GetConsensusParams(app.deliverState.ctx))
+		WithConsensusParams(app.GetConsensusParams(app.DeliverState.ctx))
 
 	// we also set block gas meter to checkState in case the application needs to
 	// verify gas consumption during (Re)CheckTx
@@ -174,7 +174,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	}
 
 	if app.beginBlocker != nil {
-		res = app.beginBlocker(app.deliverState.ctx, req)
+		res = app.beginBlocker(app.DeliverState.ctx, req)
 		res.Events = sdk.MarkEventsToIndex(res.Events, app.indexEvents)
 	}
 	// set the signed validators for addition to context in deliverTx
@@ -182,7 +182,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 
 	// call the hooks with the BeginBlock messages
 	for _, streamingListener := range app.abciListeners {
-		goCtx := sdk.WrapSDKContext(app.deliverState.ctx)
+		goCtx := sdk.WrapSDKContext(app.DeliverState.ctx)
 		if err := streamingListener.ListenBeginBlock(goCtx, req, res); err != nil {
 			panic(fmt.Errorf("BeginBlock listening hook failed, height: %d, err: %w", req.Header.Height, err))
 		}
@@ -195,22 +195,22 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBlock) {
 	defer telemetry.MeasureSince(time.Now(), "abci", "end_block")
 
-	if app.deliverState.ms.TracingEnabled() {
-		app.deliverState.ms = app.deliverState.ms.SetTracingContext(nil).(sdk.CacheMultiStore)
+	if app.DeliverState.ms.TracingEnabled() {
+		app.DeliverState.ms = app.DeliverState.ms.SetTracingContext(nil).(sdk.CacheMultiStore)
 	}
 
 	if app.endBlocker != nil {
-		res = app.endBlocker(app.deliverState.ctx, req)
+		res = app.endBlocker(app.DeliverState.ctx, req)
 		res.Events = sdk.MarkEventsToIndex(res.Events, app.indexEvents)
 	}
 
-	if cp := app.GetConsensusParams(app.deliverState.ctx); cp != nil {
+	if cp := app.GetConsensusParams(app.DeliverState.ctx); cp != nil {
 		res.ConsensusParamUpdates = cp
 	}
 
 	// call the streaming service hooks with the EndBlock messages
 	for _, streamingListener := range app.abciListeners {
-		goCtx := sdk.WrapSDKContext(app.deliverState.ctx)
+		goCtx := sdk.WrapSDKContext(app.DeliverState.ctx)
 		if err := streamingListener.ListenEndBlock(goCtx, req, res); err != nil {
 			panic(fmt.Errorf("EndBlock listening hook failed, height: %d, err: %w", req.Height, err))
 		}
@@ -265,7 +265,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 
 	defer func() {
 		for _, streamingListener := range app.abciListeners {
-			goCtx := sdk.WrapSDKContext(app.deliverState.ctx)
+			goCtx := sdk.WrapSDKContext(app.DeliverState.ctx)
 			if err := streamingListener.ListenDeliverTx(goCtx, req, res); err != nil {
 				panic(fmt.Errorf("DeliverTx listening hook failed: %w", err))
 			}
@@ -307,13 +307,13 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 func (app *BaseApp) Commit() abci.ResponseCommit {
 	defer telemetry.MeasureSince(time.Now(), "abci", "commit")
 
-	header := app.deliverState.ctx.BlockHeader()
+	header := app.DeliverState.ctx.BlockHeader()
 	retainHeight := app.GetBlockRetentionHeight(header.Height)
 
 	// Write the DeliverTx state into branched storage and commit the MultiStore.
 	// The write to the DeliverTx state writes all state transitions to the root
 	// MultiStore (app.cms) so when Commit() is called is persists those values.
-	app.deliverState.ms.Write()
+	app.DeliverState.ms.Write()
 	commitID := app.cms.Commit()
 
 	res := abci.ResponseCommit{
@@ -323,7 +323,7 @@ func (app *BaseApp) Commit() abci.ResponseCommit {
 
 	// call the hooks with the Commit message
 	for _, streamingListener := range app.abciListeners {
-		goCtx := sdk.WrapSDKContext(app.deliverState.ctx)
+		goCtx := sdk.WrapSDKContext(app.DeliverState.ctx)
 		if err := streamingListener.ListenCommit(goCtx, res); err != nil {
 			panic(fmt.Errorf("Commit listening hook failed, height: %d, err: %w", header.Height, err))
 		}
@@ -338,7 +338,7 @@ func (app *BaseApp) Commit() abci.ResponseCommit {
 	app.setCheckState(header)
 
 	// empty/reset the deliver state
-	app.deliverState = nil
+	app.DeliverState = nil
 
 	var halt bool
 
@@ -735,7 +735,7 @@ func (app *BaseApp) GetBlockRetentionHeight(commitHeight int64) int64 {
 	// evidence parameters instead of computing an estimated nubmer of blocks based
 	// on the unbonding period and block commitment time as the two should be
 	// equivalent.
-	cp := app.GetConsensusParams(app.deliverState.ctx)
+	cp := app.GetConsensusParams(app.DeliverState.ctx)
 	if cp != nil && cp.Evidence != nil && cp.Evidence.MaxAgeNumBlocks > 0 {
 		retentionHeight = commitHeight - cp.Evidence.MaxAgeNumBlocks
 	}
