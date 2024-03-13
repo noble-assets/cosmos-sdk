@@ -424,11 +424,11 @@ func (app *BaseApp) setCheckState(header tmproto.Header) {
 	}
 }
 
-// setDeliverState sets the BaseApp's DeliverState with a branched multi-store
+// SetDeliverState sets the BaseApp's DeliverState with a branched multi-store
 // (i.e. a CacheMultiStore) and a new Context with the same multi-store branch,
 // and provided header. It is set on InitChain and BeginBlock and set to nil on
 // Commit.
-func (app *BaseApp) setDeliverState(header tmproto.Header) {
+func (app *BaseApp) SetDeliverState(header tmproto.Header) {
 	ms := app.cms.CacheMultiStore()
 	app.DeliverState = &state{
 		ms:  ms,

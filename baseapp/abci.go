@@ -43,7 +43,7 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	}
 
 	// initialize the deliver state and check state with a correct header
-	app.setDeliverState(initHeader)
+	app.SetDeliverState(initHeader)
 	app.setCheckState(initHeader)
 
 	// Store the consensus params in the BaseApp's paramstore. Note, this must be
@@ -141,7 +141,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	// already be initialized in InitChain. Otherwise app.DeliverState will be
 	// nil, since it is reset on Commit.
 	if app.DeliverState == nil {
-		app.setDeliverState(req.Header)
+		app.SetDeliverState(req.Header)
 	} else {
 		// In the first block, app.DeliverState.ctx will already be initialized
 		// by InitChain. Context is now updated with Header information.
