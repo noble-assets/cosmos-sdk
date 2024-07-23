@@ -1,0 +1,14 @@
+syntax = "proto3";
+package cosmos.crypto.authn;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/cosmos/cosmos-sdk/crypto/keys/authn";
+
+// PubKey defines a authn public key
+message PubKey {
+  option (gogoproto.goproto_stringer) = false;
+
+  string key_id = 1;
+  bytes key = 2;
+}
