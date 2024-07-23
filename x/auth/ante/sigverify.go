@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/crypto/keys/authn"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -386,6 +387,10 @@ func DefaultSigVerificationGasConsumer(
 ) error {
 	pubkey := sig.PubKey
 	switch pubkey := pubkey.(type) {
+	case *authn.PubKey:
+		meter.ConsumeGas(params.SigVerifyCostSecp256r1(), "ante verify: authn")
+		return nil
+
 	case *ed25519.PubKey:
 		meter.ConsumeGas(params.SigVerifyCostED25519, "ante verify: ed25519")
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidPubKey, "ED25519 public keys are unsupported")
