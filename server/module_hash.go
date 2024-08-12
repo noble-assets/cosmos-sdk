@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	"github.com/cosmos/cosmos-sdk/store/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/version"
 )
@@ -69,16 +68,16 @@ func getModuleHashesAtHeight(svrCtx *Context, appCreator servertypes.AppCreator,
 	}
 
 	// Create a new slice of StoreInfos for storing the modified hashes.
-	storeInfos := make([]types.StoreInfo, len(commitInfoForHeight.StoreInfos))
+	storeInfos := make([]storetypes.StoreInfo, len(commitInfoForHeight.StoreInfos))
 
 	for i, storeInfo := range commitInfoForHeight.StoreInfos {
 		// Convert the hash to a hexadecimal string.
 		hash := strings.ToUpper(hex.EncodeToString(storeInfo.CommitId.Hash))
 
 		// Create a new StoreInfo with the modified hash.
-		storeInfos[i] = types.StoreInfo{
+		storeInfos[i] = storetypes.StoreInfo{
 			Name: storeInfo.Name,
-			CommitId: types.CommitID{
+			CommitId: storetypes.CommitID{
 				Version: storeInfo.CommitId.Version,
 				Hash:    []byte(hash),
 			},
@@ -91,7 +90,7 @@ func getModuleHashesAtHeight(svrCtx *Context, appCreator servertypes.AppCreator,
 	})
 
 	// Create a new CommitInfo with the modified StoreInfos.
-	commitInfoForHeight = &types.CommitInfo{
+	commitInfoForHeight = &storetypes.CommitInfo{
 		Version:    commitInfoForHeight.Version,
 		StoreInfos: storeInfos,
 	}
