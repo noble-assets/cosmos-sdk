@@ -156,6 +156,13 @@ func (rs *Store) GetCommitKVStore(key types.StoreKey) types.CommitKVStore {
 	return rs.stores[key]
 }
 
+// GetCommitInfo attempts to retrieve CommitInfo for a given version/height. It
+// will return an error if no CommitInfo exists, we fail to unmarshal the record
+// or if we cannot retrieve the object from the DB.
+func (rs *Store) GetCommitInfo(ver int64) (*types.CommitInfo, error) {
+	return getCommitInfo(rs.db, ver)
+}
+
 // GetStores returns mounted stores
 func (rs *Store) GetStores() map[types.StoreKey]types.CommitKVStore {
 	return rs.stores
