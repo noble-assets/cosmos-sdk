@@ -226,6 +226,9 @@
   
     - [Msg](#cosmos.crisis.v1beta1.Msg)
   
+- [cosmos/crypto/authn/keys.proto](#cosmos/crypto/authn/keys.proto)
+    - [PubKey](#cosmos.crypto.authn.PubKey)
+  
 - [cosmos/crypto/ed25519/keys.proto](#cosmos/crypto/ed25519/keys.proto)
     - [PrivKey](#cosmos.crypto.ed25519.PrivKey)
     - [PubKey](#cosmos.crypto.ed25519.PubKey)
@@ -3525,6 +3528,38 @@ Msg defines the bank Msg service.
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
 | `VerifyInvariant` | [MsgVerifyInvariant](#cosmos.crisis.v1beta1.MsgVerifyInvariant) | [MsgVerifyInvariantResponse](#cosmos.crisis.v1beta1.MsgVerifyInvariantResponse) | VerifyInvariant defines a method to verify a particular invariance. | |
+
+ <!-- end services -->
+
+
+
+<a name="cosmos/crypto/authn/keys.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## cosmos/crypto/authn/keys.proto
+
+
+
+<a name="cosmos.crypto.authn.PubKey"></a>
+
+### PubKey
+PubKey defines a authn public key
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `key_id` | [string](#string) |  |  |
+| `key` | [bytes](#bytes) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
 
  <!-- end services -->
 
