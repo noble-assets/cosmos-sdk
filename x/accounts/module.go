@@ -60,9 +60,7 @@ func NewAppModule(cdc codec.Codec, k Keeper) AppModule {
 func (a AppModuleBasic) Name() string { return ModuleName }
 
 // RegisterGRPCGatewayRoutes implements module.AppModuleBasic.
-func (a AppModuleBasic) RegisterGRPCGatewayRoutes(client.Context, *runtime.ServeMux) {
-	panic("unimplemented")
-}
+func (a AppModuleBasic) RegisterGRPCGatewayRoutes(client.Context, *runtime.ServeMux) {}
 
 // RegisterInterfaces implements module.AppModuleBasic.
 func (a AppModuleBasic) RegisterInterfaces(types.InterfaceRegistry) {
