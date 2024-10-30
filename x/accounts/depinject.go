@@ -21,7 +21,8 @@ type AccountsInputs struct {
 type AccountsOutputs struct {
 	depinject.Out
 
-	Module appmodule.AppModule
+	Module         appmodule.AppModule
+	AccountsKeeper Keeper
 }
 
 func ProvideModule(in AccountsInputs) AccountsOutputs {

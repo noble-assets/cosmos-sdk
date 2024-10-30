@@ -2,8 +2,11 @@ package accounts
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/errors"
+	v1 "cosmossdk.io/x/accounts/v1"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,12 +45,14 @@ type AppModuleBasic struct {
 // AppModule implements the sdk.AppModule interface
 type AppModule struct {
 	AppModuleBasic
+	keeper Keeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(cdc codec.Codec) AppModule {
+func NewAppModule(cdc codec.Codec, k Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
+		keeper:         k,
 	}
 }
 
@@ -79,22 +84,35 @@ func (a AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
 // DefaultGenesis implements module.HasGenesis.
 func (a AppModule) DefaultGenesis(codec.JSONCodec) json.RawMessage {
-	panic("unimplemented")
+	return a.cdc.MustMarshalJSON(&v1.GenesisState{})
 }
 
 // ExportGenesis implements module.HasGenesis.
-func (a AppModule) ExportGenesis(sdk.Context, codec.JSONCodec) json.RawMessage {
-	panic("unimplemented")
+func (a AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
+	gs, err := a.keeper.ExportState(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("failed to export genesis state: %s", err))
+	}
+	return cdc.MustMarshalJSON(gs)
 }
 
 // InitGenesis implements module.HasGenesis.
-func (a AppModule) InitGenesis(sdk.Context, codec.JSONCodec, json.RawMessage) {
-	panic("unimplemented")
+func (a AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) {
+	var genesisState v1.GenesisState
+	cdc.MustUnmarshalJSON(data, &genesisState)
+	if err := a.keeper.ImportState(ctx, &genesisState); err != nil {
+		panic(fmt.Sprintf("failed to import genesis state: %s", err))
+	}
 }
 
 // ValidateGenesis implements module.HasGenesis.
-func (a AppModule) ValidateGenesis(codec.JSONCodec, client.TxEncodingConfig, json.RawMessage) error {
-	panic("unimplemented")
+func (a AppModule) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+	var data v1.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
+		return errors.Wrapf(err, "failed to unmarshal %s genesis state", ModuleName)
+	}
+
+	return nil // TODO: validate
 }
 
 // IsAppModule implements appmodule.AppModule.
