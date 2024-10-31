@@ -16,6 +16,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
 const (
@@ -63,8 +64,8 @@ func (a AppModuleBasic) Name() string { return ModuleName }
 func (a AppModuleBasic) RegisterGRPCGatewayRoutes(client.Context, *runtime.ServeMux) {}
 
 // RegisterInterfaces implements module.AppModuleBasic.
-func (a AppModuleBasic) RegisterInterfaces(types.InterfaceRegistry) {
-	panic("unimplemented")
+func (a AppModuleBasic) RegisterInterfaces(registry types.InterfaceRegistry) {
+	msgservice.RegisterMsgServiceDesc(registry, v1.MsgServiceDesc())
 }
 
 // RegisterLegacyAminoCodec implements module.AppModuleBasic.
