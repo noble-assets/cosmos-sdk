@@ -31,14 +31,6 @@ message MsgInit {
   string account_type = 2;
   // message is the message to be sent to the account.
   google.protobuf.Any message = 3;
-  // funds contains the coins that the account wants to
-  // send alongside the request.
-  repeated cosmos.base.v1beta1.Coin funds = 4 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (amino.encoding)         = "legacy_coins",
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
 }
 
 // MsgInitResponse defines the Create response type for the Msg/Create RPC method.
@@ -58,14 +50,6 @@ message MsgExecute {
   string target = 2;
   // message is the message to be sent to the account.
   google.protobuf.Any message = 3;
-  // funds contains the coins that the account wants to
-  // send alongside the request.
-  repeated cosmos.base.v1beta1.Coin funds = 4 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
-    (amino.encoding)         = "legacy_coins",
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
 }
 
 // MsgExecuteResponse defines the Execute response type for the Msg/Execute RPC method.
