@@ -93,6 +93,7 @@ func NewDefaultSigningOptions() (*txsigning.Options, error) {
 	return &txsigning.Options{
 		AddressCodec:          authcodec.NewBech32Codec(sdkConfig.GetBech32AccountAddrPrefix()),
 		ValidatorAddressCodec: authcodec.NewBech32Codec(sdkConfig.GetBech32ValidatorAddrPrefix()),
+		JesterAddressCodec:    authcodec.NewBech32Codec("jester"),
 	}, nil
 }
 

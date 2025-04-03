@@ -44,6 +44,7 @@ type ModuleInputs struct {
 	Config                *txconfigv1.Config
 	AddressCodec          address.Codec
 	ValidatorAddressCodec runtime.ValidatorAddressCodec
+	JesterAddressCodec    runtime.JesterAddressCodec
 	Codec                 codec.Codec
 	ProtoFileResolver     txsigning.ProtoFileResolver
 	// BankKeeper is the expected bank keeper to be passed to AnteHandlers
@@ -79,6 +80,7 @@ func ProvideModule(in ModuleInputs) ModuleOutputs {
 			FileResolver:          in.ProtoFileResolver,
 			AddressCodec:          in.AddressCodec,
 			ValidatorAddressCodec: in.ValidatorAddressCodec,
+			JesterAddressCodec:    in.JesterAddressCodec,
 			CustomGetSigners:      make(map[protoreflect.FullName]txsigning.GetSignersFunc),
 		},
 		CustomSignModes: customSignModeHandlers,

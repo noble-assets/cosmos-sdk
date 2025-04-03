@@ -161,10 +161,11 @@ func SetupAppBuilder(inputs AppInputs) {
 	}
 }
 
-func ProvideInterfaceRegistry(addressCodec address.Codec, validatorAddressCodec ValidatorAddressCodec, customGetSigners []signing.CustomGetSigner) (codectypes.InterfaceRegistry, error) {
+func ProvideInterfaceRegistry(addressCodec address.Codec, validatorAddressCodec ValidatorAddressCodec, jesterAddressCodec JesterAddressCodec, customGetSigners []signing.CustomGetSigner) (codectypes.InterfaceRegistry, error) {
 	signingOptions := signing.Options{
 		AddressCodec:          addressCodec,
 		ValidatorAddressCodec: validatorAddressCodec,
+		JesterAddressCodec:    jesterAddressCodec,
 	}
 	for _, signer := range customGetSigners {
 		signingOptions.DefineCustomGetSigners(signer.MsgType, signer.Fn)
@@ -266,6 +267,9 @@ type (
 
 	// ConsensusAddressCodec is an alias for address.Codec for validator consensus addresses.
 	ConsensusAddressCodec address.Codec
+
+	// JesterAddressCodec is an alias for address.Codec for validator jester addresses.
+	JesterAddressCodec address.Codec
 )
 
 type AddressCodecInputs struct {
@@ -277,13 +281,14 @@ type AddressCodecInputs struct {
 	AddressCodecFactory          func() address.Codec         `optional:"true"`
 	ValidatorAddressCodecFactory func() ValidatorAddressCodec `optional:"true"`
 	ConsensusAddressCodecFactory func() ConsensusAddressCodec `optional:"true"`
+	JesterAddressCodecFactory    func() JesterAddressCodec    `optional:"true"`
 }
 
 // ProvideAddressCodec provides an address.Codec to the container for any
 // modules that want to do address string <> bytes conversion.
-func ProvideAddressCodec(in AddressCodecInputs) (address.Codec, ValidatorAddressCodec, ConsensusAddressCodec) {
-	if in.AddressCodecFactory != nil && in.ValidatorAddressCodecFactory != nil && in.ConsensusAddressCodecFactory != nil {
-		return in.AddressCodecFactory(), in.ValidatorAddressCodecFactory(), in.ConsensusAddressCodecFactory()
+func ProvideAddressCodec(in AddressCodecInputs) (address.Codec, ValidatorAddressCodec, ConsensusAddressCodec, JesterAddressCodec) {
+	if in.AddressCodecFactory != nil && in.ValidatorAddressCodecFactory != nil && in.ConsensusAddressCodecFactory != nil && in.JesterAddressCodecFactory != nil {
+		return in.AddressCodecFactory(), in.ValidatorAddressCodecFactory(), in.ConsensusAddressCodecFactory(), in.JesterAddressCodecFactory()
 	}
 
 	if in.AuthConfig == nil || in.AuthConfig.Bech32Prefix == "" {
@@ -304,5 +309,6 @@ func ProvideAddressCodec(in AddressCodecInputs) (address.Codec, ValidatorAddress
 
 	return addresscodec.NewBech32Codec(in.AuthConfig.Bech32Prefix),
 		addresscodec.NewBech32Codec(in.StakingConfig.Bech32PrefixValidator),
-		addresscodec.NewBech32Codec(in.StakingConfig.Bech32PrefixConsensus)
+		addresscodec.NewBech32Codec(in.StakingConfig.Bech32PrefixConsensus),
+		addresscodec.NewBech32Codec("jester")
 }

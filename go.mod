@@ -163,6 +163,9 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 )
 
+// use noble compatible cosmossdk.io/x/tx
+replace cosmossdk.io/x/tx => github.com/noble-assets/cosmos-sdk/x/tx v0.0.0-20250403100154-7c89c1d3a0e1
+
 // Here are the short-lived replace from the Cosmos SDK
 // Replace here are pending PRs, or version to be tagged
 // replace (

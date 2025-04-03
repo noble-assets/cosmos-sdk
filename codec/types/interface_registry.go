@@ -128,6 +128,7 @@ func NewInterfaceRegistry() InterfaceRegistry {
 		SigningOptions: signing.Options{
 			AddressCodec:          failingAddressCodec{},
 			ValidatorAddressCodec: failingAddressCodec{},
+			JesterAddressCodec:    failingAddressCodec{},
 		},
 	})
 	if err != nil {

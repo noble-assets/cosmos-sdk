@@ -33,6 +33,7 @@ func (o CodecOptions) NewInterfaceRegistry() codectypes.InterfaceRegistry {
 		SigningOptions: signing.Options{
 			AddressCodec:          address.NewBech32Codec(accAddressPrefix),
 			ValidatorAddressCodec: address.NewBech32Codec(valAddressPrefix),
+			JesterAddressCodec:    address.NewBech32Codec("jester"),
 		},
 	})
 	if err != nil {
