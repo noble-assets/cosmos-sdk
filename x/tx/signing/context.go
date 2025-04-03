@@ -30,6 +30,7 @@ type Context struct {
 	typeResolver          protoregistry.MessageTypeResolver
 	addressCodec          address.Codec
 	validatorAddressCodec address.Codec
+	jesterAddressCodec    address.Codec
 	getSignersFuncs       sync.Map
 	customGetSignerFuncs  map[protoreflect.FullName]GetSignersFunc
 	maxRecursionDepth     int
@@ -49,6 +50,9 @@ type Options struct {
 
 	// ValidatorAddressCodec is the codec for converting validator addresses between strings and bytes.
 	ValidatorAddressCodec address.Codec
+
+	// JesterAddressCodec is the codec for converting jester addresses between strings and bytes.
+	JesterAddressCodec address.Codec
 
 	// CustomGetSigners is a map of message types to custom GetSignersFuncs.
 	CustomGetSigners map[protoreflect.FullName]GetSignersFunc
@@ -97,6 +101,10 @@ func NewContext(options Options) (*Context, error) {
 		return nil, errors.New("validator address codec is required")
 	}
 
+	if options.JesterAddressCodec == nil {
+		return nil, errors.New("jester address codec is required")
+	}
+
 	if options.MaxRecursionDepth <= 0 {
 		options.MaxRecursionDepth = 32
 	}
@@ -111,6 +119,7 @@ func NewContext(options Options) (*Context, error) {
 		typeResolver:          protoTypes,
 		addressCodec:          options.AddressCodec,
 		validatorAddressCodec: options.ValidatorAddressCodec,
+		jesterAddressCodec:    options.JesterAddressCodec,
 		getSignersFuncs:       sync.Map{},
 		customGetSignerFuncs:  customGetSignerFuncs,
 		maxRecursionDepth:     options.MaxRecursionDepth,
@@ -325,6 +334,9 @@ func (c *Context) getAddressCodec(field protoreflect.FieldDescriptor) address.Co
 		if scalarOpt.(string) == "cosmos.ValidatorAddressString" {
 			addrCdc = c.validatorAddressCodec
 		}
+		if scalarOpt.(string) == "noble.JesterAddressString" {
+			addrCdc = c.jesterAddressCodec
+		}
 	}
 
 	return addrCdc
@@ -369,6 +381,11 @@ func (c *Context) AddressCodec() address.Codec {
 // ValidatorAddressCodec returns the validator address codec used by the context.
 func (c *Context) ValidatorAddressCodec() address.Codec {
 	return c.validatorAddressCodec
+}
+
+// JesterAddressCodec returns the jester address codec used by the context.
+func (c *Context) JesterAddressCodec() address.Codec {
+	return c.jesterAddressCodec
 }
 
 // FileResolver returns the protobuf file resolver used by the context.
