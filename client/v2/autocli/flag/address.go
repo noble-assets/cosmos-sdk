@@ -147,6 +147,72 @@ func (a *consensusAddressValue) Set(s string) error {
 	return nil
 }
 
+type jesterAddressStringType struct{}
+
+func (a jesterAddressStringType) NewValue(ctx *context.Context, b *Builder) Value {
+	return &jesterAddressValue{
+		addressValue: addressValue{
+			addressCodec: b.JesterAddressCodec,
+			ctx:          ctx,
+		},
+	}
+}
+
+func (a jesterAddressStringType) DefaultValue() string {
+	return ""
+}
+
+type jesterAddressValue struct {
+	addressValue
+}
+
+func (a jesterAddressValue) Get(protoreflect.Value) (protoreflect.Value, error) {
+	return protoreflect.ValueOfString(a.value), nil
+}
+
+func (a jesterAddressValue) String() string {
+	return a.value
+}
+
+func (a *jesterAddressValue) Set(s string) error {
+	// we get the keyring on set, as in NewValue the context is the parent context (before RunE)
+	keyring := getKeyringFromCtx(a.ctx)
+	addr, err := keyring.LookupAddressByKeyName(s)
+	if err == nil {
+		addrStr, err := a.addressCodec.BytesToString(addr)
+		if err != nil {
+			return fmt.Errorf("invalid jester address got from keyring: %w", err)
+		}
+
+		a.value = addrStr
+		return nil
+	}
+
+	_, err = a.addressCodec.StringToBytes(s)
+	if err == nil {
+		a.value = s
+		return nil
+	}
+
+	// fallback to pubkey parsing
+	registry := types.NewInterfaceRegistry()
+	cryptocodec.RegisterInterfaces(registry)
+	cdc := codec.NewProtoCodec(registry)
+
+	var pk cryptotypes.PubKey
+	err2 := cdc.UnmarshalInterfaceJSON([]byte(s), &pk)
+	if err2 != nil {
+		return fmt.Errorf("input isn't a pubkey (%w) or is an invalid account address (%w)", err, err2)
+	}
+
+	a.value, err = a.addressCodec.BytesToString(pk.Address())
+	if err != nil {
+		return fmt.Errorf("invalid pubkey address: %w", err)
+	}
+
+	return nil
+}
+
 func getKeyringFromCtx(ctx *context.Context) keyring.Keyring {
 	dctx := *ctx
 	if dctx != nil {

@@ -127,12 +127,14 @@ func (b *Builder) BuildMsgMethodCommand(descriptor protoreflect.MethodDescriptor
 		if addr := input.Get(fd).String(); addr == "" {
 			scalarType, ok := flag.GetScalarType(fd)
 			if ok {
-				// override address codec if validator or consensus address
+				// override address codec if validator, consensus, or jester address
 				switch scalarType {
 				case flag.ValidatorAddressStringScalarType:
 					addressCodec = b.Builder.ValidatorAddressCodec
 				case flag.ConsensusAddressStringScalarType:
 					addressCodec = b.Builder.ConsensusAddressCodec
+				case flag.JesterAddressStringScalarType:
+					addressCodec = b.Builder.JesterAddressCodec
 				}
 			}
 

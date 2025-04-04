@@ -40,6 +40,7 @@ type AppOptions struct {
 	AddressCodec          address.Codec
 	ValidatorAddressCodec runtime.ValidatorAddressCodec
 	ConsensusAddressCodec runtime.ConsensusAddressCodec
+	JesterAddressCodec    runtime.JesterAddressCodec
 
 	// ClientCtx contains the necessary information needed to execute the commands.
 	ClientCtx client.Context
@@ -68,6 +69,7 @@ func (appOptions AppOptions) EnhanceRootCommand(rootCmd *cobra.Command) error {
 			AddressCodec:          appOptions.AddressCodec,
 			ValidatorAddressCodec: appOptions.ValidatorAddressCodec,
 			ConsensusAddressCodec: appOptions.ConsensusAddressCodec,
+			JesterAddressCodec:    appOptions.JesterAddressCodec,
 		},
 		GetClientConn: func(cmd *cobra.Command) (grpc.ClientConnInterface, error) {
 			return client.GetClientQueryContext(cmd)

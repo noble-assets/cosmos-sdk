@@ -27,6 +27,7 @@ const (
 	AddressStringScalarType          = "cosmos.AddressString"
 	ValidatorAddressStringScalarType = "cosmos.ValidatorAddressString"
 	ConsensusAddressStringScalarType = "cosmos.ConsensusAddressString"
+	JesterAddressStringScalarType    = "noble.JesterAddressString"
 	PubkeyScalarType                 = "cosmos.Pubkey"
 )
 
@@ -53,6 +54,7 @@ type Builder struct {
 	AddressCodec          address.Codec
 	ValidatorAddressCodec runtime.ValidatorAddressCodec
 	ConsensusAddressCodec runtime.ConsensusAddressCodec
+	JesterAddressCodec    runtime.JesterAddressCodec
 }
 
 func (b *Builder) init() {
@@ -69,6 +71,7 @@ func (b *Builder) init() {
 		b.scalarFlagTypes[AddressStringScalarType] = addressStringType{}
 		b.scalarFlagTypes[ValidatorAddressStringScalarType] = validatorAddressStringType{}
 		b.scalarFlagTypes[ConsensusAddressStringScalarType] = consensusAddressStringType{}
+		b.scalarFlagTypes[JesterAddressStringScalarType] = jesterAddressStringType{}
 		b.scalarFlagTypes[PubkeyScalarType] = pubkeyType{}
 	}
 }
@@ -87,6 +90,10 @@ func (b *Builder) ValidateAndComplete() error {
 
 	if b.ConsensusAddressCodec == nil {
 		return errors.New("consensus address codec is required in flag builder")
+	}
+
+	if b.JesterAddressCodec == nil {
+		return errors.New("jester address codec is required in flag builder")
 	}
 
 	if b.TypeResolver == nil {
