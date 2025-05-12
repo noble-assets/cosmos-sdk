@@ -199,7 +199,10 @@ func init() {
 	appmodule.Register(
 		&modulev1.Module{},
 		appmodule.Provide(ProvideModule),
-		appmodule.Invoke(InvokeSetSendRestrictions),
+		appmodule.Invoke(
+			InvokeSetSendRestrictions, 
+			InvokeSetSendAction,
+			),
 	)
 }
 
@@ -269,6 +272,10 @@ func InvokeSetSendRestrictions(
 	}
 
 	modules := maps.Keys(restrictions)
+	if len(modules) == 0 {
+		return nil
+	}
+
 	order := config.RestrictionsOrder
 	if len(order) == 0 {
 		order = modules
@@ -279,9 +286,6 @@ func InvokeSetSendRestrictions(
 		return fmt.Errorf("len(restrictions order: %v) != len(restriction modules: %v)", order, modules)
 	}
 
-	if len(modules) == 0 {
-		return nil
-	}
 
 	for _, module := range order {
 		restriction, ok := restrictions[module]
@@ -290,6 +294,42 @@ func InvokeSetSendRestrictions(
 		}
 
 		keeper.AppendSendRestriction(restriction)
+	}
+
+	return nil
+}
+
+func InvokeSetSendAction(
+	config *modulev1.Module,
+	keeper keeper.BaseKeeper,
+	actions map[string]types.SendActionFn,
+) error {
+	if config == nil {
+		return nil
+	}
+
+	modules := maps.Keys(actions)
+	if len(modules) == 0 {
+		return nil
+	}
+
+	order := config.ActionsOrder
+	if len(order) == 0 {
+		order = modules
+		sort.Strings(order)
+	}
+
+	if len(order) != len(modules) {
+		return fmt.Errorf("len(actions order: %v) != len(actions modules: %v)", order, modules)
+	}
+
+	for _, module := range order {
+		action, ok := actions[module]
+		if !ok {
+			return fmt.Errorf("can't find send action for module %s", module)
+		}
+
+		keeper.AppendSendAction(action)
 	}
 
 	return nil

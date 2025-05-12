@@ -23,4 +23,6 @@ message Module {
   // order is provided, then restrictions will be applied in alphabetical order
   // of module names.
   repeated string restrictions_order = 3;
+
+  repeated string actions_order = 4;
 }

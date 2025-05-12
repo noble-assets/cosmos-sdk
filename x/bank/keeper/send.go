@@ -26,6 +26,10 @@ type SendKeeper interface {
 	PrependSendRestriction(restriction types.SendRestrictionFn)
 	ClearSendRestriction()
 
+	AppendSendAction(action types.SendActionFn)
+	PrependSendAction(action types.SendActionFn)
+	ClearSendAction()
+
 	InputOutputCoins(ctx context.Context, input types.Input, outputs []types.Output) error
 	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
 
@@ -69,6 +73,7 @@ type BaseSendKeeper struct {
 	authority string
 
 	sendRestriction *sendRestriction
+	sendAction *sendAction
 }
 
 func NewBaseSendKeeper(
@@ -92,6 +97,7 @@ func NewBaseSendKeeper(
 		authority:       authority,
 		logger:          logger,
 		sendRestriction: newSendRestriction(),
+		sendAction: newSendAction(),
 	}
 }
 
@@ -109,6 +115,19 @@ func (k BaseSendKeeper) PrependSendRestriction(restriction types.SendRestriction
 func (k BaseSendKeeper) ClearSendRestriction() {
 	k.sendRestriction.clear()
 }
+
+func (k BaseSendKeeper) AppendSendAction(action types.SendActionFn) {
+	k.sendAction.append(action)
+}
+
+func (k BaseSendKeeper) PrependSendAction(action types.SendActionFn) {
+	k.sendAction.prepend(action)
+}
+
+func (k BaseSendKeeper) ClearSendAction() {
+	k.sendAction.clear()
+}
+
 
 // GetAuthority returns the x/bank module's authority.
 func (k BaseSendKeeper) GetAuthority() string {
@@ -190,6 +209,11 @@ func (k BaseSendKeeper) InputOutputCoins(ctx context.Context, input types.Input,
 			),
 		)
 
+		err = k.sendAction.apply(ctx, inAddress, outAddress, out.Coins)
+		if err != nil {
+			return err
+		}
+
 		// Create account if recipient does not exist.
 		//
 		// NOTE: This should ultimately be removed in favor a more flexible approach
@@ -219,6 +243,11 @@ func (k BaseSendKeeper) SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccA
 	}
 
 	err = k.addCoins(ctx, toAddr, amt)
+	if err != nil {
+		return err
+	}
+
+	err = k.sendAction.apply(ctx, fromAddr, toAddr, amt)
 	if err != nil {
 		return err
 	}
@@ -505,4 +534,35 @@ func (r *sendRestriction) apply(ctx context.Context, fromAddr, toAddr sdk.AccAdd
 		return toAddr, nil
 	}
 	return r.fn(ctx, fromAddr, toAddr, amt)
+}
+
+type sendAction struct {
+	fn types.SendActionFn
+}
+
+func newSendAction() *sendAction {
+	return &sendAction{
+		fn: nil,
+	}
+}
+
+func (a *sendAction) append(action types.SendActionFn) {
+	a.fn = a.fn.Then(action)
+}
+
+func (a *sendAction) prepend(action types.SendActionFn) {
+	a.fn = action.Then(a.fn)
+}
+
+func (a *sendAction) clear() {
+	a.fn = nil
+}
+
+var _ types.SendActionFn = (*sendAction)(nil).apply
+
+func (a *sendAction) apply(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error {
+	if a == nil || a.fn == nil {
+		return nil
+	}
+	return a.fn(ctx, fromAddr, toAddr, amt)
 }
