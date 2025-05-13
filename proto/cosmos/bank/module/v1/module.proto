@@ -23,4 +23,9 @@ message Module {
   // order is provided, then restrictions will be applied in alphabetical order
   // of module names.
   repeated string restrictions_order = 3;
+
+  // actions_order specifies the order of send actions and should be a list of
+  // module names which provide a send action instance. If no order is provided,
+  // then actions will be applied in alphabetical order of module names.
+  repeated string actions_order = 4;
 }
