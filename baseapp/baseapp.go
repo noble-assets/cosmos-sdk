@@ -6,6 +6,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/cockroachdb/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -194,6 +195,8 @@ type BaseApp struct {
 	//
 	// SAFETY: it's safe to do if validators validate the total gas wanted in the `ProcessProposal`, which is the case in the default handler.
 	disableBlockGasMeter bool
+
+	blockDelayGetter sdk.BlockDelayGetter
 }
 
 // NewBaseApp returns a reference to an initialized BaseApp. It accepts a
@@ -536,6 +539,16 @@ func (app *BaseApp) GetConsensusParams(ctx sdk.Context) cmtproto.ConsensusParams
 	}
 
 	return cp
+}
+
+// GetNextBlockDelay returns the next_block_delay from the application.
+func (app *BaseApp) GetNextBlockDelay(ctx sdk.Context) time.Duration {
+	if app.blockDelayGetter == nil {
+		// If `NextBlockDelay` is 0, CometBFT uses the legacy config
+		// `TimeoutCommit` instead.
+		return 0
+	}
+	return app.blockDelayGetter(ctx)
 }
 
 // StoreConsensusParams sets the consensus parameters to the BaseApp's param
