@@ -840,6 +840,9 @@ func (app *BaseApp) internalFinalizeBlock(ctx context.Context, req *abci.Request
 		TxResults:             txResults,
 		ValidatorUpdates:      endBlock.ValidatorUpdates,
 		ConsensusParamUpdates: &cp,
+		// If `NextBlockDelay` is 0, CometBFT uses the legacy config
+		// `TimeoutCommit` instead.
+		NextBlockDelay: app.GetNextBlockDelay(app.finalizeBlockState.Context()),
 	}, nil
 }
 

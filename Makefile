@@ -416,7 +416,8 @@ proto-lint:
 proto-check-breaking:
 	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
 
-CMT_URL              = https://raw.githubusercontent.com/cometbft/cometbft/v0.38.0/proto/tendermint
+# TODO(@john): Switch this branch to v0.38.x-noble once https://github.com/noble-assets/cometbft/pull/1 is merged!
+CMT_URL              = https://raw.githubusercontent.com/noble-assets/cometbft/v0.38.x-adr-115/proto/tendermint
 
 CMT_CRYPTO_TYPES     = proto/tendermint/crypto
 CMT_ABCI_TYPES       = proto/tendermint/abci
