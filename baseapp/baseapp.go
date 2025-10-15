@@ -8,12 +8,11 @@ import (
 	"slices"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/cockroachdb/errors"
-	cmtproto "github.com/cometbft/cometbft/api/cometbft/types/v2"
-	abci "github.com/cometbft/cometbft/v2/abci/types"
-	"github.com/cometbft/cometbft/v2/crypto/tmhash"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	protov2 "google.golang.org/protobuf/proto"
@@ -56,10 +55,6 @@ const (
 	execModeVoteExtension       = sdk.ExecModeVoteExtension       // Extend or verify a pre-commit vote
 	execModeVerifyVoteExtension = sdk.ExecModeVerifyVoteExtension // Verify a vote extension
 	execModeFinalize            = sdk.ExecModeFinalize            // Finalize a block proposal
-
-	// defaultNextBlockDelay is chosen following documentation in CometBFT:
-	// https://github.com/cometbft/cometbft/blob/88ef3d267de491db98a654be0af6d791e8724ed0/spec/abci/abci%2B%2B_methods.md?plain=1#L689
-	defaultNextBlockDelay = time.Second
 )
 
 var _ servertypes.ABCI = (*BaseApp)(nil)
@@ -113,10 +108,6 @@ type BaseApp struct {
 	// flag for sealing options and parameters to a BaseApp
 	sealed bool
 
-	// nextBlockDelay is the delay to wait until the next block after ABCI has committed.
-	// This gives the application more time to receive precommits.
-	nextBlockDelay time.Duration
-
 	// block height at which to halt the chain and gracefully shutdown
 	haltHeight uint64
 
@@ -129,7 +120,7 @@ type BaseApp struct {
 	// ResponseCommit.RetainHeight value during ABCI Commit. A value of 0 indicates
 	// that no blocks should be pruned.
 	//
-	// Note: CometBFT block pruning is dependant on this parameter in conjunction
+	// Note: CometBFT block pruning is dependent on this parameter in conjunction
 	// with the unbonding (safety threshold) period, state pruning and state sync
 	// snapshot parameters to determine the correct minimum value of
 	// ResponseCommit.RetainHeight.
@@ -190,7 +181,6 @@ func NewBaseApp(
 		fauxMerkleMode:   false,
 		sigverifyTx:      true,
 		gasConfig:        config.GasConfig{QueryGasLimit: math.MaxUint64},
-		nextBlockDelay:   defaultNextBlockDelay,
 	}
 
 	for _, option := range options {
@@ -538,7 +528,7 @@ func (app *BaseApp) GetMaximumBlockGas(ctx sdk.Context) uint64 {
 	}
 }
 
-func (app *BaseApp) validateFinalizeBlockHeight(req *abci.FinalizeBlockRequest) error {
+func (app *BaseApp) validateFinalizeBlockHeight(req *abci.RequestFinalizeBlock) error {
 	if req.Height < 1 {
 		return fmt.Errorf("invalid height: %d", req.Height)
 	}
@@ -646,7 +636,7 @@ func (app *BaseApp) cacheTxContext(ctx sdk.Context, txBytes []byte) (sdk.Context
 	return ctx.WithMultiStore(msCache), msCache
 }
 
-func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) ([]abci.Event, error) {
+func (app *BaseApp) preBlock(req *abci.RequestFinalizeBlock) ([]abci.Event, error) {
 	var events []abci.Event
 	if app.abciHandlers.PreBlocker != nil {
 		finalizeState := app.stateManager.GetState(execModeFinalize)
@@ -669,7 +659,7 @@ func (app *BaseApp) preBlock(req *abci.FinalizeBlockRequest) ([]abci.Event, erro
 	return events, nil
 }
 
-func (app *BaseApp) beginBlock(_ *abci.FinalizeBlockRequest) (sdk.BeginBlock, error) {
+func (app *BaseApp) beginBlock(_ *abci.RequestFinalizeBlock) (sdk.BeginBlock, error) {
 	var (
 		resp sdk.BeginBlock
 		err  error
